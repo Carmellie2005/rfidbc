@@ -203,7 +203,11 @@
                                 </a>
                             @else
                                 <span class="inline-flex h-10 items-center justify-center rounded-md border border-slate-200 bg-slate-50 px-3 text-xs font-semibold text-slate-500">
-                                    PDF available after checklist submission
+                                    @if ($log->status === 'expired')
+                                        PDF not available — scan was replaced
+                                    @else
+                                        PDF available after checklist submission
+                                    @endif
                                 </span>
                             @endif
                             <button type="button" class="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-blue-200 bg-white px-3 text-xs font-bold text-blue-700 shadow-sm transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-blue-500/35 dark:bg-slate-950/60 dark:text-blue-200 dark:hover:bg-blue-950/40 dark:focus:ring-offset-slate-900" @click="openPatrolDetails(@js((string) $log->id))" aria-label="View patrol details for {{ $log->securityGuard?->name ?? 'this patrol log' }}">
@@ -302,7 +306,11 @@
                                                 </a>
                                             @else
                                                 <span class="inline-flex h-9 items-center justify-center rounded-md border border-slate-200 bg-slate-50 px-3 text-xs font-semibold text-slate-500">
-                                                    PDF available after checklist submission
+                                                    @if ($log->status === 'expired')
+                                                        PDF not available — scan was replaced
+                                                    @else
+                                                        PDF available after checklist submission
+                                                    @endif
                                                 </span>
                                             @endif
                                         </div>
@@ -492,7 +500,11 @@
                         </a>
                         @else
                             <span class="inline-flex h-10 items-center justify-center rounded-md border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-500">
-                                PDF available after checklist submission
+                                @if ($log->status === 'expired')
+                                    PDF not available — scan was replaced
+                                @else
+                                    PDF available after checklist submission
+                                @endif
                             </span>
                         @endif
                         <button type="button" class="inline-flex h-10 items-center justify-center rounded-md border border-blue-200 bg-white px-4 text-sm font-bold text-blue-700 shadow-sm transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-blue-500/35 dark:bg-slate-950/60 dark:text-blue-200 dark:hover:bg-blue-950/40 dark:focus:ring-offset-slate-900" @click="closePatrolDetails()">

@@ -260,12 +260,14 @@ class PatrolLogReportTest extends TestCase
         $supervisor = User::factory()->create(['role' => 'admin']);
         $guard = $this->createGuard('SG-NO-CHECKLIST', 'RFID-NO-CHECKLIST');
         $patrolLog = $this->createPatrolLog($guard, status: 'pending_checklist');
+        $this->createPatrolLog($guard, checkpointCode: 'CP-SG-NO-CHECKLIST-REPLACED', status: 'expired');
 
         $this
             ->actingAs($supervisor)
             ->get(route('patrol-logs.index'))
             ->assertOk()
             ->assertSee('PDF available after checklist submission')
+            ->assertSee('PDF not available — scan was replaced')
             ->assertDontSee('/patrol-logs/'.$patrolLog->id.'/pdf', false);
 
         $this
