@@ -138,6 +138,7 @@
                 @forelse ($logs as $log)
                     @php
                         $scanTime = $log->scanned_at?->timezone(config('app.timezone'));
+                        $hasChecklist = $log->checklistResponse !== null;
                         $patrolPdfVersion = now()->timestamp;
                         $patrolPdfDownloadUrl = route('patrol-logs.pdf', ['patrolLog' => $log, 'download' => 1, 'v' => $patrolPdfVersion]);
                         $patrolPdfPreviewUrl = route('patrol-logs.pdf', ['patrolLog' => $log, 'preview' => 1, 'v' => $patrolPdfVersion]);
@@ -191,14 +192,20 @@
                         </div>
 
                         <div class="mt-3 flex flex-wrap justify-end gap-2">
-                            @if ($isSupervisor)
-                                <button type="button" data-skip-global-loader="true" x-on:click="openPatrolPdfPreview(@js($patrolPdfPreviewUrl), @js($patrolPdfDownloadUrl), @js('Patrol Log - '.($log->checkpoint?->name ?? $log->checkpoint_code ?? 'Patrol')))" class="inline-flex h-10 items-center justify-center rounded-md border border-emerald-200 bg-white px-3 text-xs font-bold text-emerald-700 shadow-sm transition hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:border-emerald-500/45 dark:bg-slate-950/60 dark:text-emerald-200 dark:hover:bg-emerald-950/40 dark:focus:ring-offset-slate-900">
-                                    Print PDF
-                                </button>
+                            @if ($hasChecklist)
+                                @if ($isSupervisor)
+                                    <button type="button" data-skip-global-loader="true" x-on:click="openPatrolPdfPreview(@js($patrolPdfPreviewUrl), @js($patrolPdfDownloadUrl), @js('Patrol Log - '.($log->checkpoint?->name ?? $log->checkpoint_code ?? 'Patrol')))" class="inline-flex h-10 items-center justify-center rounded-md border border-emerald-200 bg-white px-3 text-xs font-bold text-emerald-700 shadow-sm transition hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:border-emerald-500/45 dark:bg-slate-950/60 dark:text-emerald-200 dark:hover:bg-emerald-950/40 dark:focus:ring-offset-slate-900">
+                                        Print PDF
+                                    </button>
+                                @endif
+                                <a href="{{ $patrolPdfDownloadUrl }}" class="inline-flex h-10 items-center justify-center rounded-md border border-violet-200 bg-white px-3 text-xs font-bold text-violet-700 shadow-sm transition hover:bg-violet-50 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 dark:border-violet-500/45 dark:bg-slate-950/60 dark:text-violet-200 dark:hover:bg-violet-950/40 dark:focus:ring-offset-slate-900">
+                                    Download PDF
+                                </a>
+                            @else
+                                <span class="inline-flex h-10 items-center justify-center rounded-md border border-slate-200 bg-slate-50 px-3 text-xs font-semibold text-slate-500">
+                                    PDF available after checklist submission
+                                </span>
                             @endif
-                            <a href="{{ $patrolPdfDownloadUrl }}" class="inline-flex h-10 items-center justify-center rounded-md border border-violet-200 bg-white px-3 text-xs font-bold text-violet-700 shadow-sm transition hover:bg-violet-50 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 dark:border-violet-500/45 dark:bg-slate-950/60 dark:text-violet-200 dark:hover:bg-violet-950/40 dark:focus:ring-offset-slate-900">
-                                Download PDF
-                            </a>
                             <button type="button" class="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-blue-200 bg-white px-3 text-xs font-bold text-blue-700 shadow-sm transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-blue-500/35 dark:bg-slate-950/60 dark:text-blue-200 dark:hover:bg-blue-950/40 dark:focus:ring-offset-slate-900" @click="openPatrolDetails(@js((string) $log->id))" aria-label="View patrol details for {{ $log->securityGuard?->name ?? 'this patrol log' }}">
                                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                     <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -231,6 +238,7 @@
                             @forelse ($logs as $log)
                                 @php
                                     $scanTime = $log->scanned_at?->timezone(config('app.timezone'));
+                                    $hasChecklist = $log->checklistResponse !== null;
                                     $patrolPdfVersion = now()->timestamp;
                                     $patrolPdfDownloadUrl = route('patrol-logs.pdf', ['patrolLog' => $log, 'download' => 1, 'v' => $patrolPdfVersion]);
                                     $patrolPdfPreviewUrl = route('patrol-logs.pdf', ['patrolLog' => $log, 'preview' => 1, 'v' => $patrolPdfVersion]);
@@ -283,14 +291,20 @@
                                                     <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" stroke-width="2" />
                                                 </svg>
                                             </button>
-                                            @if ($isSupervisor)
-                                                <button type="button" data-skip-global-loader="true" x-on:click="openPatrolPdfPreview(@js($patrolPdfPreviewUrl), @js($patrolPdfDownloadUrl), @js('Patrol Log - '.($log->checkpoint?->name ?? $log->checkpoint_code ?? 'Patrol')))" class="inline-flex h-9 items-center justify-center rounded-md border border-emerald-200 bg-white px-3 text-xs font-bold text-emerald-700 shadow-sm transition hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:border-emerald-500/45 dark:bg-slate-950/60 dark:text-emerald-200 dark:hover:bg-emerald-950/40 dark:focus:ring-offset-slate-900">
-                                                    Print PDF
-                                                </button>
+                                            @if ($hasChecklist)
+                                                @if ($isSupervisor)
+                                                    <button type="button" data-skip-global-loader="true" x-on:click="openPatrolPdfPreview(@js($patrolPdfPreviewUrl), @js($patrolPdfDownloadUrl), @js('Patrol Log - '.($log->checkpoint?->name ?? $log->checkpoint_code ?? 'Patrol')))" class="inline-flex h-9 items-center justify-center rounded-md border border-emerald-200 bg-white px-3 text-xs font-bold text-emerald-700 shadow-sm transition hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:border-emerald-500/45 dark:bg-slate-950/60 dark:text-emerald-200 dark:hover:bg-emerald-950/40 dark:focus:ring-offset-slate-900">
+                                                        Print PDF
+                                                    </button>
+                                                @endif
+                                                <a href="{{ $patrolPdfDownloadUrl }}" class="inline-flex h-9 items-center justify-center rounded-md border border-violet-200 bg-white px-3 text-xs font-bold text-violet-700 shadow-sm transition hover:bg-violet-50 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 dark:border-violet-500/45 dark:bg-slate-950/60 dark:text-violet-200 dark:hover:bg-violet-950/40 dark:focus:ring-offset-slate-900">
+                                                    Download PDF
+                                                </a>
+                                            @else
+                                                <span class="inline-flex h-9 items-center justify-center rounded-md border border-slate-200 bg-slate-50 px-3 text-xs font-semibold text-slate-500">
+                                                    PDF available after checklist submission
+                                                </span>
                                             @endif
-                                            <a href="{{ $patrolPdfDownloadUrl }}" class="inline-flex h-9 items-center justify-center rounded-md border border-violet-200 bg-white px-3 text-xs font-bold text-violet-700 shadow-sm transition hover:bg-violet-50 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 dark:border-violet-500/45 dark:bg-slate-950/60 dark:text-violet-200 dark:hover:bg-violet-950/40 dark:focus:ring-offset-slate-900">
-                                                Download PDF
-                                            </a>
                                         </div>
                                     </td>
                                 </tr>
@@ -319,6 +333,7 @@
                         ? route('patrol-logs.area-selfie.show', $log)
                         : null;
                     $detailPhotoCount = $detailProofPhotos->count() + ($detailAreaSelfieUrl ? 1 : 0);
+                    $hasChecklist = $log->checklistResponse !== null;
                     $detailPdfVersion = now()->timestamp;
                     $detailPdfDownloadUrl = route('patrol-logs.pdf', ['patrolLog' => $log, 'download' => 1, 'v' => $detailPdfVersion]);
                     $detailPdfPreviewUrl = route('patrol-logs.pdf', ['patrolLog' => $log, 'preview' => 1, 'v' => $detailPdfVersion]);
@@ -466,14 +481,20 @@
                     </div>
 
                     <div class="flex flex-col gap-2 border-t border-blue-100 bg-white px-5 py-3 sm:flex-row sm:justify-end">
-                        @if ($isSupervisor)
+                        @if ($hasChecklist)
+                            @if ($isSupervisor)
                             <button type="button" data-skip-global-loader="true" x-on:click="openPatrolPdfPreview(@js($detailPdfPreviewUrl), @js($detailPdfDownloadUrl), @js('Patrol Log - '.($log->checkpoint?->name ?? $log->checkpoint_code ?? 'Patrol')))" class="inline-flex h-10 items-center justify-center rounded-md border border-emerald-200 bg-white px-4 text-sm font-bold text-emerald-700 shadow-sm transition hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:border-emerald-500/45 dark:bg-slate-950/60 dark:text-emerald-200 dark:hover:bg-emerald-950/40 dark:focus:ring-offset-slate-900">
                                 Print PDF
                             </button>
-                        @endif
+                            @endif
                         <a href="{{ $detailPdfDownloadUrl }}" class="inline-flex h-10 items-center justify-center rounded-md border border-violet-200 bg-white px-4 text-sm font-bold text-violet-700 shadow-sm transition hover:bg-violet-50 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 dark:border-violet-500/45 dark:bg-slate-950/60 dark:text-violet-200 dark:hover:bg-violet-950/40 dark:focus:ring-offset-slate-900">
                             Download PDF
                         </a>
+                        @else
+                            <span class="inline-flex h-10 items-center justify-center rounded-md border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-500">
+                                PDF available after checklist submission
+                            </span>
+                        @endif
                         <button type="button" class="inline-flex h-10 items-center justify-center rounded-md border border-blue-200 bg-white px-4 text-sm font-bold text-blue-700 shadow-sm transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-blue-500/35 dark:bg-slate-950/60 dark:text-blue-200 dark:hover:bg-blue-950/40 dark:focus:ring-offset-slate-900" @click="closePatrolDetails()">
                             Close
                         </button>

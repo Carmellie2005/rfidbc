@@ -19,6 +19,7 @@ class PatrolLogReportTest extends TestCase
     {
         $guard = $this->createGuard('SG-FILTER', 'RFID-FILTER');
         $patrolLog = $this->createPatrolLog($guard);
+        $this->addChecklist($patrolLog);
 
         $response = $this
             ->actingAs($guard->user)
@@ -57,6 +58,7 @@ class PatrolLogReportTest extends TestCase
         $supervisor = User::factory()->create(['role' => 'admin']);
         $guard = $this->createGuard('SG-PDF', 'RFID-PDF');
         $patrolLog = $this->createPatrolLog($guard);
+        $this->addChecklist($patrolLog);
 
         $response = $this
             ->actingAs($supervisor)
@@ -72,6 +74,7 @@ class PatrolLogReportTest extends TestCase
         $supervisor = User::factory()->create(['role' => 'admin']);
         $guard = $this->createGuard('SG-PREVIEW', 'RFID-PREVIEW');
         $patrolLog = $this->createPatrolLog($guard);
+        $this->addChecklist($patrolLog);
 
         $response = $this
             ->actingAs($supervisor)
@@ -110,6 +113,7 @@ class PatrolLogReportTest extends TestCase
     {
         $guard = $this->createGuard('SG-OWN', 'RFID-OWN');
         $patrolLog = $this->createPatrolLog($guard);
+        $this->addChecklist($patrolLog);
 
         $response = $this
             ->actingAs($guard->user)
@@ -215,6 +219,7 @@ class PatrolLogReportTest extends TestCase
             Carbon::parse('2026-09-03 20:00:00', config('app.timezone')),
             'CP-HIDE-VALID',
         );
+        $this->addChecklist($visibleLog);
 
         $pendingSelfieLog = $this->createPatrolLog(
             $guard,
@@ -248,6 +253,25 @@ class PatrolLogReportTest extends TestCase
             ->assertOk()
             ->assertSee('No patrol logs to display')
             ->assertDontSee('/patrol-logs/'.$pendingSelfieLog->id.'/pdf', false);
+    }
+
+    public function test_patrol_log_without_checklist_has_no_pdf_action_or_download(): void
+    {
+        $supervisor = User::factory()->create(['role' => 'admin']);
+        $guard = $this->createGuard('SG-NO-CHECKLIST', 'RFID-NO-CHECKLIST');
+        $patrolLog = $this->createPatrolLog($guard, status: 'pending_checklist');
+
+        $this
+            ->actingAs($supervisor)
+            ->get(route('patrol-logs.index'))
+            ->assertOk()
+            ->assertSee('PDF available after checklist submission')
+            ->assertDontSee('/patrol-logs/'.$patrolLog->id.'/pdf', false);
+
+        $this
+            ->actingAs($supervisor)
+            ->get(route('patrol-logs.pdf', $patrolLog))
+            ->assertNotFound();
     }
 
     public function test_my_patrol_logs_are_paginated_for_guard(): void
@@ -323,6 +347,13 @@ class PatrolLogReportTest extends TestCase
             'rfid_status' => in_array($status, ['pending_face', 'pending_selfie'], true) ? 'valid' : $status,
             'status' => $status,
             'scanned_at' => $scannedAt ?? now(config('app.timezone')),
+        ]);
+    }
+
+    private function addChecklist(PatrolLog $patrolLog): void
+    {
+        $patrolLog->checklistResponse()->create([
+            'item_statuses' => array_fill_keys(PatrolChecklist::fields(), PatrolChecklist::STATUS_NORMAL),
         ]);
     }
 }

@@ -42,6 +42,7 @@ class PatrolLogController extends Controller
         $this->ensureCanViewPatrolLog($request, $patrolLog);
 
         $patrolLog->load(['securityGuard', 'checkpoint', 'checklistResponse.proofPhotos', 'incidentReport']);
+        abort_unless($patrolLog->checklistResponse, 404, 'The patrol PDF is not available until the checklist is submitted.');
         File::ensureDirectoryExists(storage_path('fonts'));
 
         $pdf = Pdf::loadView('system.patrols.pdf', [
