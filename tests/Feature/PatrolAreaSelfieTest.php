@@ -256,6 +256,8 @@ class PatrolAreaSelfieTest extends TestCase
             ->assertSee('openAreaSelfieCamera()', false)
             ->assertSee('captureAreaSelfie()', false)
             ->assertSee('checklist_statuses[doors_checked]', false)
+            ->assertSee('Walkways inspected')
+            ->assertSee('Report any problem through an Incident Report.')
             ->assertDontSee('checklist_photos', false)
             ->assertDontSee('Checklist proof photo')
             ->assertDontSee('Scheduled patrol only')

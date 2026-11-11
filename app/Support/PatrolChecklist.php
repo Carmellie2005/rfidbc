@@ -16,9 +16,13 @@ class PatrolChecklist
         'doors_checked' => 'Entry points secured',
         'locks_checked' => 'Locks inspected',
         'lighting_ok' => 'Lighting functional',
-        'gates_checked' => 'Walkways clear',
+        'gates_checked' => 'Walkways inspected',
         'visibility_checked' => 'Area visibility clear',
         'cctv_alarm_checked' => 'Patrol point condition checked',
+    ];
+
+    private const ITEM_DESCRIPTIONS = [
+        'gates_checked' => 'Check for boxes, vehicles, objects, or other obstructions. Report any problem through an Incident Report.',
     ];
 
     public const STATUS_OPTIONS = [
@@ -77,6 +81,11 @@ class PatrolChecklist
     public static function label(string $field): ?string
     {
         return self::ITEMS[$field] ?? null;
+    }
+
+    public static function description(string $field): ?string
+    {
+        return self::ITEM_DESCRIPTIONS[$field] ?? null;
     }
 
     public static function incidentCategories(): array

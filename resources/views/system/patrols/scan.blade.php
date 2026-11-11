@@ -552,7 +552,12 @@
                                         <div class="min-h-24 rounded-md border border-blue-100 bg-white p-3 text-sm text-slate-700 shadow-sm transition hover:bg-blue-50/70">
                                             <label for="{{ $field }}_{{ \App\Support\PatrolChecklist::STATUS_NORMAL }}" class="flex h-full cursor-pointer items-start gap-3">
                                                 <input id="{{ $field }}_{{ \App\Support\PatrolChecklist::STATUS_NORMAL }}" form="patrol-record-form" type="checkbox" name="checklist_statuses[{{ $field }}]" value="{{ \App\Support\PatrolChecklist::STATUS_NORMAL }}" class="mt-0.5 h-5 w-5 shrink-0 rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500" @checked($selectedChecklistStatus === \App\Support\PatrolChecklist::STATUS_NORMAL)>
-                                                <span class="min-w-0 flex-1 font-semibold leading-6 text-slate-800">{{ $label }}</span>
+                                                <span class="min-w-0 flex-1">
+                                                    <span class="block font-semibold leading-6 text-slate-800">{{ $label }}</span>
+                                                    @if ($description = \App\Support\PatrolChecklist::description($field))
+                                                        <span class="mt-1 block text-xs leading-5 text-slate-500">{{ $description }}</span>
+                                                    @endif
+                                                </span>
                                             </label>
                                             <x-input-error :messages="$errors->get('checklist_statuses.'.$field)" class="mt-2" />
                                         </div>
