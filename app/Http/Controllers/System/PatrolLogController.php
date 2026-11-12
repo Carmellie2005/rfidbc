@@ -7,6 +7,7 @@ use App\Models\ChecklistProofPhoto;
 use App\Models\Checkpoint;
 use App\Models\Guard;
 use App\Models\PatrolLog;
+use App\Support\MonthlyRecordExport;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Response;
@@ -16,6 +17,8 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PatrolLogController extends Controller
 {
@@ -34,7 +37,70 @@ class PatrolLogController extends Controller
             'guards' => $isSupervisor ? Guard::orderBy('name')->get() : collect([$guardProfile])->filter(),
             'checkpoints' => Checkpoint::orderBy('name')->get(),
             'isSupervisor' => $isSupervisor,
+            'exportMonth' => now(config('app.timezone'))->format('Y-m'),
         ]);
+    }
+
+    public function exportMonthly(Request $request): StreamedResponse|BinaryFileResponse
+    {
+        $month = $this->exportMonth($request);
+        $format = $this->exportFormat($request);
+        $isSupervisor = $request->user()->role === 'admin';
+        $guardProfile = $request->user()->guardProfile;
+        $timezone = config('app.timezone');
+
+        $logs = $this->patrolLogQuery($request, $isSupervisor, $guardProfile)
+            ->whereBetween('scanned_at', [
+                $month->copy()->startOfMonth(),
+                $month->copy()->endOfMonth(),
+            ])
+            ->latest('scanned_at')
+            ->get();
+
+        $headers = [
+            'Patrol Log No.',
+            'Date and Time',
+            'Guard Name',
+            'Employee No.',
+            'Checkpoint',
+            'Checkpoint Code',
+            'RFID Scan Status',
+            'Patrol Status',
+            'Checklist Status',
+            'Area Selfie Captured',
+            'Selfie Latitude',
+            'Selfie Longitude',
+            'Selfie Accuracy (m)',
+            'Selfie Capture Time',
+            'Incident Category',
+        ];
+
+        $rows = $logs->map(function (PatrolLog $log) use ($timezone): array {
+            return [
+                'PL-'.str_pad((string) $log->id, 6, '0', STR_PAD_LEFT),
+                $log->scanned_at?->timezone($timezone)->format('Y-m-d H:i:s'),
+                $log->securityGuard?->name ?? 'Unknown',
+                $log->securityGuard?->employee_no ?? '',
+                $log->checkpoint?->name ?? 'Unknown',
+                $log->checkpoint_code ?? $log->checkpoint?->code ?? '',
+                str($log->rfid_status)->replace('_', ' ')->title(),
+                str($log->status)->replace('_', ' ')->title(),
+                $log->checklistSummary(),
+                filled($log->area_selfie_path) || filled($log->area_selfie_image_data) ? 'Yes' : 'No',
+                $log->area_selfie_latitude,
+                $log->area_selfie_longitude,
+                $log->area_selfie_accuracy,
+                $log->area_selfie_captured_at?->timezone($timezone)->format('Y-m-d H:i:s'),
+                $log->incidentReport?->category ?? 'None',
+            ];
+        });
+
+        return MonthlyRecordExport::download(
+            $format,
+            'patrol-logs-'.$month->format('Y-m'),
+            $headers,
+            $rows,
+        );
     }
 
     public function downloadPdf(Request $request, PatrolLog $patrolLog): Response
@@ -129,6 +195,33 @@ class PatrolLogController extends Controller
                     $date->copy()->endOfDay(),
                 ]);
             });
+    }
+
+    private function exportMonth(Request $request): Carbon
+    {
+        $value = (string) $request->input(
+            'month',
+            now(config('app.timezone'))->format('Y-m'),
+        );
+
+        try {
+            $month = Carbon::createFromFormat('!Y-m', $value, config('app.timezone'));
+        } catch (\Throwable) {
+            abort(422, 'Please provide a valid export month.');
+        }
+
+        abort_unless($month && $month->format('Y-m') === $value, 422, 'Please provide a valid export month.');
+
+        return $month;
+    }
+
+    private function exportFormat(Request $request): string
+    {
+        $format = (string) $request->input('format', 'csv');
+
+        abort_unless(in_array($format, ['csv', 'xlsx'], true), 422, 'Please choose CSV or Excel format.');
+
+        return $format;
     }
 
     private function ensureCanViewPatrolLog(Request $request, PatrolLog $patrolLog): void

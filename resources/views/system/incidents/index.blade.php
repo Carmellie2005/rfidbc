@@ -78,6 +78,23 @@
                 </div>
             </form>
 
+            <details class="rounded-md border border-blue-100 bg-white shadow-sm">
+                <summary class="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-blue-950">
+                    Monthly Records
+                </summary>
+                <div class="border-t border-blue-100 px-4 py-4">
+                    <form method="GET" action="{{ route('incidents.export') }}" class="flex flex-col gap-3 sm:flex-row sm:items-end">
+                        <div class="min-w-0 flex-1">
+                            <label for="incident_export_month" class="block text-xs font-semibold uppercase text-blue-800">Month</label>
+                            <input id="incident_export_month" name="month" type="month" value="{{ $exportMonth }}" required class="mt-1 block h-10 w-full rounded-md border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        </div>
+                        <button name="format" value="csv" type="submit" class="inline-flex h-10 items-center justify-center rounded-md border border-blue-200 px-4 text-sm font-semibold text-blue-700 hover:bg-blue-50">Download CSV</button>
+                        <button name="format" value="xlsx" type="submit" class="inline-flex h-10 items-center justify-center rounded-md bg-blue-700 px-4 text-sm font-semibold text-white hover:bg-blue-800">Download Excel</button>
+                    </form>
+                    <p class="mt-2 text-xs text-slate-500">Exports the selected month’s incident reports, including attached photo metadata when available.</p>
+                </div>
+            </details>
+
             @if ($incidents->hasPages())
                 <x-pagination-panel :paginator="$incidents" label="incident reports" page-label="Incident reports page" class="rounded-md border border-blue-100 bg-white px-4 py-3 shadow-sm" />
             @endif

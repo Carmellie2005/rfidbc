@@ -57,6 +57,7 @@ Route::middleware(['auth', 'active.guard'])->group(function () {
     Route::delete('/patrol/incident-evidence/{incidentEvidence}', [GuardPatrolController::class, 'destroyIncidentEvidence'])->name('patrol.incident-evidence.destroy');
     Route::post('/guard/tutorial/complete', [GuardTutorialController::class, 'complete'])->name('guard.tutorial.complete');
     Route::get('/incidents/{incidentReport}/images/{incidentReportImage}', [IncidentReportController::class, 'image'])->name('incidents.images.show');
+    Route::get('/patrol-logs/export', [PatrolLogController::class, 'exportMonthly'])->name('patrol-logs.export');
     Route::get('/patrol-logs/{patrolLog}/pdf', [PatrolLogController::class, 'downloadPdf'])->name('patrol-logs.pdf');
     Route::get('/patrol-logs/{patrolLog}/area-selfie', [PatrolLogController::class, 'areaSelfie'])->name('patrol-logs.area-selfie.show');
     Route::get('/patrol-logs/{patrolLog}/proof-photos/{checklistProofPhoto}', [PatrolLogController::class, 'proofPhoto'])->name('patrol-logs.proof-photos.show');
@@ -75,6 +76,7 @@ Route::middleware(['auth', 'active.guard'])->group(function () {
         Route::put('/guards/{guard}/password', [GuardController::class, 'resetPassword'])->name('guards.password.reset');
         Route::resource('guards', GuardController::class)->except(['show']);
         Route::resource('checkpoints', CheckpointController::class)->except(['show']);
+        Route::get('/incidents/export', [IncidentReportController::class, 'exportMonthly'])->name('incidents.export');
         Route::get('/incidents', [IncidentReportController::class, 'index'])->name('incidents.index');
         Route::patch('/incidents/{incidentReport}', [IncidentReportController::class, 'update'])->name('incidents.update');
         Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');

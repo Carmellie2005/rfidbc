@@ -7,6 +7,7 @@ use App\Models\IncidentReport;
 use App\Models\IncidentReportImage;
 use App\Support\AuditLogger;
 use App\Support\ImageCompressor;
+use App\Support\MonthlyRecordExport;
 use App\Support\PatrolChecklist;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
@@ -19,6 +20,8 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class IncidentReportController extends Controller
 {
@@ -33,7 +36,103 @@ class IncidentReportController extends Controller
             ->paginate(5)
             ->withQueryString();
 
-        return view('system.incidents.index', compact('incidents'));
+        return view('system.incidents.index', [
+            'incidents' => $incidents,
+            'exportMonth' => now(config('app.timezone'))->format('Y-m'),
+        ]);
+    }
+
+    public function exportMonthly(Request $request): StreamedResponse|BinaryFileResponse
+    {
+        $month = $this->exportMonth($request);
+        $format = $this->exportFormat($request);
+        $timezone = config('app.timezone');
+
+        $incidents = IncidentReport::with([
+            'securityGuard',
+            'checkpoint',
+            'images.incidentEvidence',
+        ])
+            ->whereBetween('incident_at', [
+                $month->copy()->startOfMonth(),
+                $month->copy()->endOfMonth(),
+            ])
+            ->latest('incident_at')
+            ->get();
+
+        $headers = [
+            'Incident Report No.',
+            'Incident Date and Time',
+            'Submitted At',
+            'Guard Name',
+            'Employee No.',
+            'Checkpoint',
+            'Checkpoint Code',
+            'Location',
+            'Category',
+            'Priority',
+            'Status',
+            'Description',
+            'Action Taken',
+            'Resolved At',
+            'Attached Photos',
+        ];
+
+        foreach (range(1, 3) as $photoNumber) {
+            $headers = [
+                ...$headers,
+                "Photo {$photoNumber} File",
+                "Photo {$photoNumber} Source",
+                "Photo {$photoNumber} Captured At",
+                "Photo {$photoNumber} Latitude",
+                "Photo {$photoNumber} Longitude",
+                "Photo {$photoNumber} Accuracy (m)",
+            ];
+        }
+
+        $rows = $incidents->map(function (IncidentReport $incident) use ($timezone): array {
+            $row = [
+                'IR-'.str_pad((string) $incident->id, 6, '0', STR_PAD_LEFT),
+                $incident->incident_at?->timezone($timezone)->format('Y-m-d H:i:s'),
+                $incident->reported_at?->timezone($timezone)->format('Y-m-d H:i:s'),
+                $incident->securityGuard?->name ?? 'Unknown',
+                $incident->securityGuard?->employee_no ?? '',
+                $incident->checkpoint?->name ?? 'Unassigned',
+                $incident->checkpoint?->code ?? '',
+                $incident->location ?? '',
+                $incident->category,
+                PatrolChecklist::priorityLabel($incident->priority),
+                str($incident->status)->replace('_', ' ')->title(),
+                $incident->description,
+                $incident->action_taken ?? '',
+                $incident->resolved_at?->timezone($timezone)->format('Y-m-d H:i:s'),
+                $incident->images->count(),
+            ];
+
+            foreach (range(0, 2) as $photoIndex) {
+                $image = $incident->images->values()->get($photoIndex);
+                $evidence = $image?->incidentEvidence;
+
+                $row = [
+                    ...$row,
+                    $image?->original_name ?: ($image?->image_path ? basename($image->image_path) : ''),
+                    $image?->source ?? '',
+                    $evidence?->captured_at?->timezone($timezone)->format('Y-m-d H:i:s'),
+                    $evidence?->latitude,
+                    $evidence?->longitude,
+                    $evidence?->accuracy,
+                ];
+            }
+
+            return $row;
+        });
+
+        return MonthlyRecordExport::download(
+            $format,
+            'incident-reports-'.$month->format('Y-m'),
+            $headers,
+            $rows,
+        );
     }
 
     public function update(Request $request, IncidentReport $incidentReport): RedirectResponse
@@ -433,5 +532,32 @@ class IncidentReportController extends Controller
         $category = Str::slug($incidentReport->category ?: 'incident-report');
 
         return sprintf('incident-report-%s-%06d.pdf', $category, $incidentReport->id);
+    }
+
+    private function exportMonth(Request $request): \Illuminate\Support\Carbon
+    {
+        $value = (string) $request->input(
+            'month',
+            now(config('app.timezone'))->format('Y-m'),
+        );
+
+        try {
+            $month = \Illuminate\Support\Carbon::createFromFormat('!Y-m', $value, config('app.timezone'));
+        } catch (\Throwable) {
+            abort(422, 'Please provide a valid export month.');
+        }
+
+        abort_unless($month && $month->format('Y-m') === $value, 422, 'Please provide a valid export month.');
+
+        return $month;
+    }
+
+    private function exportFormat(Request $request): string
+    {
+        $format = (string) $request->input('format', 'csv');
+
+        abort_unless(in_array($format, ['csv', 'xlsx'], true), 422, 'Please choose CSV or Excel format.');
+
+        return $format;
     }
 }
