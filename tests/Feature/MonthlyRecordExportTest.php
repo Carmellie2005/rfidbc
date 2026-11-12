@@ -95,6 +95,8 @@ class MonthlyRecordExportTest extends TestCase
 
         $this->assertNotFalse($styles);
         $this->assertStringContainsString('FF6B7280', $styles);
+        $this->assertStringContainsString('<cols>', $sheet);
+        $this->assertStringContainsString('customWidth="1"', $sheet);
     }
 
     public function test_export_controls_are_available_on_the_records_pages(): void

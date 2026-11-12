@@ -128,6 +128,7 @@ class MonthlyRecordExport
         $xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
         $xml .= '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">';
         $xml .= '<dimension ref="A1:'.$lastColumn.$lastRow.'"/><sheetViews><sheetView workbookViewId="0"/></sheetViews>';
+        $xml .= self::columnsXml($headers);
         $xml .= '<sheetData>';
 
         foreach ($allRows as $rowIndex => $row) {
@@ -164,6 +165,22 @@ class MonthlyRecordExport
         }
 
         return $name;
+    }
+
+    /**
+     * @param  array<int, string>  $headers
+     */
+    private static function columnsXml(array $headers): string
+    {
+        $xml = '<cols>';
+
+        foreach (array_values($headers) as $index => $header) {
+            $width = min(32, max(14, strlen($header) + 3));
+            $column = $index + 1;
+            $xml .= '<col min="'.$column.'" max="'.$column.'" width="'.$width.'" bestFit="1" customWidth="1"/>';
+        }
+
+        return $xml.'</cols>';
     }
 
     private static function contentTypesXml(): string
@@ -223,7 +240,7 @@ class MonthlyRecordExport
             .'<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
             .'<cellXfs count="2">'
             .'<xf numFmtId="0" fontId="0" fillId="0" borderId="0"/>'
-            .'<xf numFmtId="0" fontId="1" fillId="2" borderId="1" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>'
+            .'<xf numFmtId="0" fontId="1" fillId="2" borderId="1" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>'
             .'</cellXfs>'
             .'<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>'
             .'</styleSheet>';
