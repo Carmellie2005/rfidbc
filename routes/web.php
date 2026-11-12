@@ -76,6 +76,8 @@ Route::middleware(['auth', 'active.guard'])->group(function () {
         Route::put('/guards/{guard}/password', [GuardController::class, 'resetPassword'])->name('guards.password.reset');
         Route::resource('guards', GuardController::class)->except(['show']);
         Route::resource('checkpoints', CheckpointController::class)->except(['show']);
+        Route::get('/incidents/create', [IncidentReportController::class, 'createForSupervisor'])->name('incidents.create');
+        Route::post('/incidents', [IncidentReportController::class, 'storeForSupervisor'])->name('incidents.store');
         Route::get('/incidents/export', [IncidentReportController::class, 'exportMonthly'])->name('incidents.export');
         Route::get('/incidents', [IncidentReportController::class, 'index'])->name('incidents.index');
         Route::patch('/incidents/{incidentReport}', [IncidentReportController::class, 'update'])->name('incidents.update');

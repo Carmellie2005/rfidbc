@@ -89,6 +89,8 @@ class MonthlyRecordExportTest extends TestCase
         $this->assertNotFalse($sheet);
         $this->assertStringContainsString('Broken gate observed during patrol.', $sheet);
         $this->assertStringContainsString('Photo 1 File', $sheet);
+        $this->assertStringContainsString('Report Source', $sheet);
+        $this->assertStringContainsString('Guard Patrol Report', $sheet);
         $this->assertStringContainsString('Incident Report No.', $sheet);
         $this->assertStringContainsString('IR-'.str_pad((string) $incident->id, 6, '0', STR_PAD_LEFT), $sheet);
         $this->assertStringContainsString('<c r="A1" s="1"', $sheet);

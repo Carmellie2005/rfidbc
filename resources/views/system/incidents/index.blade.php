@@ -5,6 +5,9 @@
                 <h2 class="text-xl font-semibold leading-tight text-blue-950">{{ __('Incident Reports') }}</h2>
                 <p class="mt-1 text-sm text-blue-600">Submitted security concerns and administrator review</p>
             </div>
+            <a href="{{ route('incidents.create') }}" class="inline-flex h-10 items-center justify-center rounded-md bg-blue-700 px-4 text-sm font-semibold text-white transition hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                New Supervisor Report
+            </a>
         </div>
     </x-slot>
 
@@ -72,7 +75,15 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="grid grid-cols-2 items-end gap-2 md:col-span-2 md:flex">
+                <div>
+                    <label for="source" class="block text-xs font-semibold uppercase text-blue-800">Report Type</label>
+                    <select id="source" name="source" class="mt-1 block w-full rounded-md border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <option value="">All Reports</option>
+                        <option value="guard" @selected(request('source') === 'guard')>Guard Patrol Reports</option>
+                        <option value="supervisor" @selected(request('source') === 'supervisor')>Supervisor Reports</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 items-end gap-2 md:flex">
                     <button class="h-10 rounded-md bg-blue-700 px-4 text-sm font-semibold text-white hover:bg-blue-800 md:w-auto" type="submit">Filter</button>
                     <a href="{{ route('incidents.index') }}" class="inline-flex h-10 items-center justify-center rounded-md border border-blue-200 px-4 text-sm font-semibold text-blue-700 hover:bg-blue-50">Clear</a>
                 </div>
@@ -107,6 +118,7 @@
                         $incidentPdfDownloadUrl = route('incidents.pdf', ['incidentReport' => $incident, 'download' => 1, 'v' => $incidentPdfVersion]);
                         $incidentPdfPreviewUrl = route('incidents.pdf', ['incidentReport' => $incident, 'preview' => 1, 'v' => $incidentPdfVersion]);
                         $incidentPdfTitle = 'Incident Report - '.($incident->category ?: 'Incident');
+                        $isSupervisorReport = is_null($incident->guard_id) && is_null($incident->patrol_log_id);
                     @endphp
                     <article class="system-card-transition rounded-md border border-blue-100 bg-white p-4 shadow-sm sm:p-5">
                         <div class="grid gap-5 lg:grid-cols-[1fr_360px]">
@@ -120,6 +132,11 @@
                                         <span class="whitespace-nowrap rounded-md px-2.5 py-1 text-xs font-semibold ring-1 {{ \App\Support\StatusBadge::incidentStatus($incident->status) }}">
                                             {{ str($incident->status)->replace('_', ' ')->title() }}
                                         </span>
+                                        @if ($isSupervisorReport)
+                                            <span class="whitespace-nowrap rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">
+                                                Supervisor Report
+                                            </span>
+                                        @endif
                                     </div>
                                     <div class="flex shrink-0 flex-wrap items-center gap-2">
                                         <button
@@ -135,10 +152,10 @@
                                         </a>
                                     </div>
                                 </div>
-                                <dl class="mt-4 grid gap-3 text-sm text-slate-600 sm:grid-cols-3">
+                                <dl class="mt-4 grid gap-3 text-sm text-slate-600 sm:grid-cols-2 lg:grid-cols-4">
                                     <div>
                                         <dt class="font-semibold text-slate-800">Guard</dt>
-                                        <dd>{{ $incident->securityGuard?->name ?? 'Unknown' }}</dd>
+                                        <dd>{{ $incident->securityGuard?->name ?? ($isSupervisorReport ? 'Not linked to a guard' : 'Unknown') }}</dd>
                                     </div>
                                     <div>
                                         <dt class="font-semibold text-slate-800">Checkpoint</dt>
@@ -147,6 +164,10 @@
                                     <div>
                                         <dt class="font-semibold text-slate-800">Date/Time</dt>
                                         <dd>{{ $incidentTime?->format('M d, Y h:i A') ?? 'Not recorded' }}</dd>
+                                    </div>
+                                    <div>
+                                        <dt class="font-semibold text-slate-800">Report Type</dt>
+                                        <dd>{{ $isSupervisorReport ? 'Supervisor Report' : 'Guard Patrol Report' }}</dd>
                                     </div>
                                 </dl>
                                 <p class="mt-4 whitespace-pre-line text-sm leading-6 text-slate-700">{{ $incident->description }}</p>

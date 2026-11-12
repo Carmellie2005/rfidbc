@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\System;
 
 use App\Http\Controllers\Controller;
+use App\Models\Checkpoint;
 use App\Models\IncidentReport;
 use App\Models\IncidentReportImage;
 use App\Support\AuditLogger;
@@ -17,6 +18,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -32,6 +34,10 @@ class IncidentReportController extends Controller
             ->when($request->filled('priority'), fn ($query) => $request->priority === 'high'
                 ? $query->whereIn('priority', ['high', 'critical'])
                 : $query->where('priority', $request->priority))
+            ->when($request->input('source') === 'supervisor', fn ($query) => $query
+                ->whereNull('guard_id')
+                ->whereNull('patrol_log_id'))
+            ->when($request->input('source') === 'guard', fn ($query) => $query->whereNotNull('guard_id'))
             ->latest('incident_at')
             ->paginate(5)
             ->withQueryString();
@@ -40,6 +46,105 @@ class IncidentReportController extends Controller
             'incidents' => $incidents,
             'exportMonth' => now(config('app.timezone'))->format('Y-m'),
         ]);
+    }
+
+    public function createForSupervisor(): View
+    {
+        return view('system.incidents.supervisor-create', [
+            'incidentCategories' => PatrolChecklist::incidentCategories(),
+            'priorityOptions' => PatrolChecklist::incidentPriorityOptions(),
+            'checkpoints' => Checkpoint::query()->orderBy('name')->get(),
+            'defaultIncidentAt' => now(config('app.timezone'))->format('Y-m-d\\TH:i'),
+        ]);
+    }
+
+    public function storeForSupervisor(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'category' => ['required', 'string', 'max:100', Rule::in(PatrolChecklist::incidentCategories())],
+            'priority' => ['required', Rule::in(array_keys(PatrolChecklist::incidentPriorityOptions()))],
+            'location' => ['required', 'string', 'max:255'],
+            'checkpoint_id' => ['nullable', 'integer', 'exists:checkpoints,id'],
+            'incident_at' => ['required', 'date_format:Y-m-d\\TH:i'],
+            'description' => ['required', 'string', 'max:3000'],
+            'incident_camera_images' => ['nullable', 'array', 'max:3'],
+            'incident_camera_images.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:12288'],
+        ], [
+            'category.required' => 'Please choose an incident category.',
+            'priority.required' => 'Please choose the incident priority.',
+            'location.required' => 'Please enter where the issue was found.',
+            'incident_at.required' => 'Please enter when the issue was observed.',
+            'incident_at.date_format' => 'Please enter a valid date and time.',
+            'description.required' => 'Please describe what the supervisor observed.',
+            'incident_camera_images.array' => 'Please upload valid evidence photos.',
+            'incident_camera_images.max' => 'Please upload up to 3 evidence photos only.',
+            'incident_camera_images.*.image' => 'Each evidence file must be an image.',
+            'incident_camera_images.*.mimes' => 'Evidence photos must be JPG, PNG, or WEBP.',
+            'incident_camera_images.*.max' => 'Each evidence photo must be 12 MB or smaller.',
+        ]);
+
+        $incidentAt = Carbon::createFromFormat(
+            'Y-m-d\\TH:i',
+            $data['incident_at'],
+            config('app.timezone'),
+        );
+
+        if ($incidentAt->isFuture()) {
+            return back()
+                ->withInput()
+                ->withErrors(['incident_at' => 'Incident date and time cannot be in the future.']);
+        }
+
+        $imageFiles = collect($this->incidentImageFiles($request))
+            ->map(fn (array $item): array => [
+                'file' => $item['file'],
+                'source' => 'supervisor_upload',
+            ])
+            ->values()
+            ->all();
+
+        $incidentReport = DB::transaction(function () use ($data, $incidentAt, $imageFiles): IncidentReport {
+            $incidentReport = IncidentReport::create([
+                'patrol_log_id' => null,
+                'guard_id' => null,
+                'checkpoint_id' => $data['checkpoint_id'] ?? null,
+                'title' => $data['category'],
+                'incident_type' => $data['category'],
+                'category' => $data['category'],
+                'priority' => $data['priority'],
+                'severity' => $this->severityFromPriority($data['priority']),
+                'location' => $data['location'],
+                'incident_at' => $incidentAt,
+                'occurred_at' => $incidentAt,
+                'reported_at' => now(config('app.timezone')),
+                'description' => $data['description'],
+                'status' => 'submitted',
+            ]);
+
+            $this->storeIncidentImages($incidentReport, $imageFiles);
+
+            $firstImagePath = $incidentReport->images()
+                ->orderBy('sort_order')
+                ->orderBy('id')
+                ->value('image_path');
+
+            if ($firstImagePath) {
+                $incidentReport->update(['image_path' => $firstImagePath]);
+            }
+
+            return $incidentReport;
+        });
+
+        AuditLogger::record('incident_supervisor_created', 'Supervisor filed an additional incident report.', $incidentReport, [
+            'source' => 'supervisor',
+            'category' => $incidentReport->category,
+            'priority' => $incidentReport->priority,
+            'image_count' => $incidentReport->images()->count(),
+        ]);
+
+        return redirect()
+            ->route('incidents.index')
+            ->with('status', 'Supervisor report created successfully.');
     }
 
     public function exportMonthly(Request $request): StreamedResponse|BinaryFileResponse
@@ -64,6 +169,7 @@ class IncidentReportController extends Controller
             'Incident Report No.',
             'Incident Date and Time',
             'Submitted At',
+            'Report Source',
             'Guard Name',
             'Employee No.',
             'Checkpoint',
@@ -91,11 +197,14 @@ class IncidentReportController extends Controller
         }
 
         $rows = $incidents->map(function (IncidentReport $incident) use ($timezone): array {
+            $isSupervisorReport = is_null($incident->guard_id) && is_null($incident->patrol_log_id);
+
             $row = [
                 'IR-'.str_pad((string) $incident->id, 6, '0', STR_PAD_LEFT),
                 $incident->incident_at?->timezone($timezone)->format('Y-m-d H:i:s'),
                 $incident->reported_at?->timezone($timezone)->format('Y-m-d H:i:s'),
-                $incident->securityGuard?->name ?? 'Unknown',
+                $isSupervisorReport ? 'Supervisor Report' : 'Guard Patrol Report',
+                $incident->securityGuard?->name ?? ($isSupervisorReport ? 'Supervisor Report' : 'Unknown'),
                 $incident->securityGuard?->employee_no ?? '',
                 $incident->checkpoint?->name ?? 'Unassigned',
                 $incident->checkpoint?->code ?? '',

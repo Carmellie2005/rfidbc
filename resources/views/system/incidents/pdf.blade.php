@@ -339,8 +339,10 @@
         $resolvedDate = $incident->resolved_at ?: ($incident->status === 'resolved' ? $incident->updated_at : null);
         $resolvedDate = $resolvedDate?->timezone(config('app.timezone'));
         $patrol = $incident->patrolLog;
-        $guardName = $incident->securityGuard?->name ?? 'Unknown';
-        $employeeNo = $incident->securityGuard?->employee_no ?? 'Not recorded';
+        $isSupervisorReport = is_null($incident->guard_id) && is_null($incident->patrol_log_id);
+        $guardName = $incident->securityGuard?->name ?? ($isSupervisorReport ? 'Supervisor Report' : 'Unknown');
+        $employeeNo = $incident->securityGuard?->employee_no ?? ($isSupervisorReport ? 'Not applicable' : 'Not recorded');
+        $reportingLabel = $isSupervisorReport ? 'Supervisor Report' : 'Reporting Guard';
         $checkpointCode = $incident->checkpoint?->code ?? $patrol?->checkpoint_code ?? 'Not recorded';
         $location = $incident->checkpoint?->name ?? $incident->location ?? 'Unassigned';
         $locationCheckpoint = $checkpointCode !== 'Not recorded'
@@ -555,7 +557,7 @@
             <tr>
                 <td>
                     <span class="signature-name">{{ $guardName }}</span>
-                    <span class="signature-label">Reporting Guard</span>
+                    <span class="signature-label">{{ $reportingLabel }}</span>
                 </td>
                 <td>
                     <span class="signature-name">{{ $supervisorName }}</span>
