@@ -276,10 +276,32 @@
                         <span>Patrol Logs</span>
                     </a>
 
-                    <a href="{{ route('incidents.index') }}" class="{{ $linkClasses(request()->routeIs('incidents.*')) }}" @click="sidebarOpen = false">
-                        {!! $navIcon('incidents') !!}
-                        <span>Incident Reports</span>
-                    </a>
+                    <div x-data="{ incidentMenuOpen: @js(request()->routeIs('incidents.*')) }" class="space-y-1">
+                        <button
+                            type="button"
+                            class="{{ $linkClasses(request()->routeIs('incidents.*')) }} w-full justify-between"
+                            @click="incidentMenuOpen = ! incidentMenuOpen"
+                            :aria-expanded="incidentMenuOpen.toString()"
+                            aria-controls="supervisor-incident-submenu"
+                        >
+                            <span class="flex min-w-0 items-center gap-3">
+                                {!! $navIcon('incidents') !!}
+                                <span>Incident Reports</span>
+                            </span>
+                            <svg class="h-4 w-4 shrink-0 transition-transform duration-150" :class="incidentMenuOpen ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </button>
+
+                        <div id="supervisor-incident-submenu" x-show="incidentMenuOpen" x-cloak x-transition.origin.top class="space-y-1 pl-8">
+                            <a href="{{ route('incidents.index') }}" class="{{ $linkClasses(request()->routeIs('incidents.index')) }}" @click="sidebarOpen = false">
+                                <span>All Incident Reports</span>
+                            </a>
+                            <a href="{{ route('incidents.create') }}" class="{{ $linkClasses(request()->routeIs('incidents.create')) }}" @click="sidebarOpen = false">
+                                <span>Supervisor Report</span>
+                            </a>
+                        </div>
+                    </div>
 
                 @if ($isSupervisor)
                     <a href="{{ route('readers.index') }}" class="{{ $linkClasses(request()->routeIs('readers.*')) }}" @click="sidebarOpen = false">
