@@ -52,6 +52,8 @@ class MonthlyRecordExportTest extends TestCase
         $this->assertStringNotContainsString('CP-EXPORT-OLD', $csv);
         $this->assertStringNotContainsString('CP-EXPORT-OTHER', $csv);
         $this->assertStringNotContainsString('RFID-EXPORT-01', $csv);
+        $this->assertStringNotContainsString('Area Selfie Captured', $csv);
+        $this->assertStringNotContainsString('Selfie Latitude', $csv);
         $this->assertStringContainsString('BCP-EXPORT-01', $csv);
         $this->assertNotSame('', (string) $included->id);
     }
@@ -88,6 +90,7 @@ class MonthlyRecordExportTest extends TestCase
         $this->assertStringContainsString('Photo 1 File', $sheet);
         $this->assertStringContainsString('Incident Report No.', $sheet);
         $this->assertStringContainsString('IR-'.str_pad((string) $incident->id, 6, '0', STR_PAD_LEFT), $sheet);
+        $this->assertStringContainsString('<c r="A1" s="1"', $sheet);
     }
 
     public function test_export_controls_are_available_on_the_records_pages(): void

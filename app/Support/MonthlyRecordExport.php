@@ -75,6 +75,7 @@ class MonthlyRecordExport
             $zip->addFromString('_rels/.rels', self::rootRelationshipsXml());
             $zip->addFromString('xl/workbook.xml', self::workbookXml());
             $zip->addFromString('xl/_rels/workbook.xml.rels', self::workbookRelationshipsXml());
+            $zip->addFromString('xl/styles.xml', self::stylesXml());
             $zip->addFromString('xl/worksheets/sheet1.xml', self::worksheetXml($headers, $normalisedRows));
 
             if (! $zip->close()) {
@@ -131,13 +132,16 @@ class MonthlyRecordExport
 
         foreach ($allRows as $rowIndex => $row) {
             $excelRow = $rowIndex + 1;
-            $xml .= '<row r="'.$excelRow.'">';
+            $xml .= $excelRow === 1
+                ? '<row r="1" ht="30" customHeight="1">'
+                : '<row r="'.$excelRow.'">';
 
             foreach (array_values($row) as $columnIndex => $value) {
                 $cellReference = self::columnName($columnIndex).$excelRow;
                 $escapedValue = htmlspecialchars($value, ENT_XML1 | ENT_QUOTES, 'UTF-8');
+                $style = $excelRow === 1 ? ' s="1"' : '';
 
-                $xml .= '<c r="'.$cellReference.'" t="inlineStr"><is><t xml:space="preserve">'.$escapedValue.'</t></is></c>';
+                $xml .= '<c r="'.$cellReference.'"'.$style.' t="inlineStr"><is><t xml:space="preserve">'.$escapedValue.'</t></is></c>';
             }
 
             $xml .= '</row>';
@@ -169,6 +173,7 @@ class MonthlyRecordExport
             .'<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
             .'<Default Extension="xml" ContentType="application/xml"/>'
             .'<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
+            .'<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'
             .'<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'
             .'</Types>';
     }
@@ -194,6 +199,33 @@ class MonthlyRecordExport
         return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
             .'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
             .'<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>'
+            .'<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'
             .'</Relationships>';
+    }
+
+    private static function stylesXml(): string
+    {
+        return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            .'<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+            .'<fonts count="2">'
+            .'<font><sz val="11"/><name val="Calibri"/></font>'
+            .'<font><b/><color rgb="FFFFFFFF"/><sz val="11"/><name val="Calibri"/></font>'
+            .'</fonts>'
+            .'<fills count="3">'
+            .'<fill><patternFill patternType="none"/></fill>'
+            .'<fill><patternFill patternType="gray125"/></fill>'
+            .'<fill><patternFill patternType="solid"><fgColor rgb="FF2563EB"/><bgColor indexed="64"/></patternFill></fill>'
+            .'</fills>'
+            .'<borders count="2">'
+            .'<border><left/><right/><top/><bottom/><diagonal/></border>'
+            .'<border><left/><right/><top/><bottom style="thin"><color rgb="FFD9E7FF"/></bottom><diagonal/></border>'
+            .'</borders>'
+            .'<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
+            .'<cellXfs count="2">'
+            .'<xf numFmtId="0" fontId="0" fillId="0" borderId="0"/>'
+            .'<xf numFmtId="0" fontId="1" fillId="2" borderId="1" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>'
+            .'</cellXfs>'
+            .'<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>'
+            .'</styleSheet>';
     }
 }

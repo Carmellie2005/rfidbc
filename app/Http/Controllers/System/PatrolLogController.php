@@ -67,11 +67,6 @@ class PatrolLogController extends Controller
             'RFID Scan Status',
             'Patrol Status',
             'Checklist Status',
-            'Area Selfie Captured',
-            'Selfie Latitude',
-            'Selfie Longitude',
-            'Selfie Accuracy (m)',
-            'Selfie Capture Time',
             'Incident Category',
         ];
 
@@ -86,11 +81,6 @@ class PatrolLogController extends Controller
                 str($log->rfid_status)->replace('_', ' ')->title(),
                 str($log->status)->replace('_', ' ')->title(),
                 $log->checklistSummary(),
-                filled($log->area_selfie_path) || filled($log->area_selfie_image_data) ? 'Yes' : 'No',
-                $log->area_selfie_latitude,
-                $log->area_selfie_longitude,
-                $log->area_selfie_accuracy,
-                $log->area_selfie_captured_at?->timezone($timezone)->format('Y-m-d H:i:s'),
                 $log->incidentReport?->category ?? 'None',
             ];
         });
