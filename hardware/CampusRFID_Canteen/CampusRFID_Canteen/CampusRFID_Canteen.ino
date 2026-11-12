@@ -6,6 +6,7 @@
 #include <ArduinoJson.h>
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
+#include <time.h>
 
 #include <Preferences.h>
 #include <WebServer.h>
@@ -81,6 +82,12 @@ const unsigned long HEARTBEAT_INTERVAL_MS = 60000;
 const int WIFI_CONNECT_ATTEMPTS = 40;
 const int HTTP_TIMEOUT_MS = 65000;
 const int HEARTBEAT_TIMEOUT_MS = 10000;
+const unsigned long SCAN_PROOF_DISPLAY_MS = 10000;
+const unsigned long NTP_SYNC_TIMEOUT_MS = 8000;
+const long GMT_OFFSET_SEC = 8 * 60 * 60;
+const int DAYLIGHT_OFFSET_SEC = 0;
+const char* NTP_SERVER_1 = "pool.ntp.org";
+const char* NTP_SERVER_2 = "time.nist.gov";
 
 // =====================================================
 // OBJECTS
@@ -106,6 +113,11 @@ unsigned long lastScanTime = 0;
 String lastSuccessfulUid = "";
 unsigned long lastSuccessfulScanTime = 0;
 unsigned long lastHeartbeatTime = 0;
+bool deviceTimeSynced = false;
+bool readyClockActive = false;
+bool scanProofActive = false;
+unsigned long lastClockRenderMillis = 0;
+unsigned long scanProofStartedAt = 0;
 
 // =====================================================
 // BUZZER
@@ -162,6 +174,9 @@ String fitLcdText(String text) {
 }
 
 void lcdMessage(String line1, String line2 = "") {
+  readyClockActive = false;
+  scanProofActive = false;
+
   lcd.clear();
 
   lcd.setCursor(0, 0);
@@ -171,8 +186,113 @@ void lcdMessage(String line1, String line2 = "") {
   lcd.print(fitLcdText(line2));
 }
 
+bool syncDeviceTime() {
+  if (WiFi.status() != WL_CONNECTED) {
+    deviceTimeSynced = false;
+    return false;
+  }
+
+  configTime(
+    GMT_OFFSET_SEC,
+    DAYLIGHT_OFFSET_SEC,
+    NTP_SERVER_1,
+    NTP_SERVER_2
+  );
+
+  struct tm timeInfo;
+  deviceTimeSynced = getLocalTime(
+    &timeInfo,
+    NTP_SYNC_TIMEOUT_MS
+  );
+
+  Serial.println(
+    deviceTimeSynced
+      ? "Device time synchronized."
+      : "Device time synchronization failed."
+  );
+
+  return deviceTimeSynced;
+}
+
+String deviceClockLabel() {
+  struct tm timeInfo;
+
+  if (
+    !deviceTimeSynced ||
+    !getLocalTime(
+      &timeInfo,
+      10
+    )
+  ) {
+    deviceTimeSynced = false;
+    return "";
+  }
+
+  char buffer[17];
+
+  strftime(
+    buffer,
+    sizeof(buffer),
+    "%m/%d/%y %I:%M%p",
+    &timeInfo
+  );
+
+  return String(buffer);
+}
+
+void renderReadyClock() {
+  String clockLabel = deviceClockLabel();
+
+  lcdMessage(
+    "PATROLTAP READY",
+    clockLabel.length() > 0
+      ? clockLabel
+      : "TIME SYNC NEEDED"
+  );
+
+  readyClockActive = true;
+  scanProofActive = false;
+  lastClockRenderMillis = millis();
+}
+
+void showScanProofScreen() {
+  String clockLabel = deviceClockLabel();
+
+  lcdMessage(
+    "SCAN SUCCESSFUL",
+    clockLabel.length() > 0
+      ? clockLabel
+      : "TIME SYNC NEEDED"
+  );
+
+  readyClockActive = false;
+  scanProofActive = true;
+  scanProofStartedAt = millis();
+}
+
+void updatePatrolTapDisplay() {
+  if (scanProofActive) {
+    if (
+      millis() - scanProofStartedAt >=
+      SCAN_PROOF_DISPLAY_MS
+    ) {
+      scanProofActive = false;
+      renderReadyClock();
+    }
+
+    return;
+  }
+
+  if (
+    readyClockActive &&
+    millis() - lastClockRenderMillis >= 1000
+  ) {
+    renderReadyClock();
+  }
+}
+
 void showReady() {
-  lcdMessage("RFID Ready", "Scan Card");
+  renderReadyClock();
   readyBeep();
 }
 
@@ -833,6 +953,8 @@ void showWiFiConnected() {
 
   delay(1500);
 
+  syncDeviceTime();
+
   showReady();
 }
 
@@ -1290,10 +1412,7 @@ void showGuardName(String guardName) {
 
   delay(2000);
 
-  lcdMessage(
-    "Patrol Logged",
-    "Thank You"
-  );
+  showScanProofScreen();
 }
 
 // =====================================================
@@ -1589,10 +1708,7 @@ void sendScanToLaravel(String rfidUid) {
         "Patrol logged"
       );
 
-      lcdMessage(
-        "Patrol Logged",
-        "Thank You"
-      );
+      showScanProofScreen();
     }
   }
 
@@ -1774,6 +1890,7 @@ void setup() {
 void loop() {
 
   handleHeartbeat();
+  updatePatrolTapDisplay();
 
   if (
     !rfid.PICC_IsNewCardPresent()
@@ -1829,10 +1946,7 @@ void loop() {
 
     delay(1200);
 
-    lcdMessage(
-      "RFID Ready",
-      "Scan Card"
-    );
+    showReady();
 
     return;
   }
