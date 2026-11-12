@@ -42,6 +42,10 @@ const char* API_URL =
 
 #define DEVICE_UID "ESP32-REG-01"
 
+// Generate with: php artisan rfid:issue-device-token ESP32-REG-01 --enrollment
+// Keep the real token private and never commit it to GitHub.
+const char* DEVICE_API_TOKEN = "PASTE_DEVICE_TOKEN_HERE";
+
 // ======================================================
 // RFID PINS
 // ======================================================
@@ -1222,6 +1226,10 @@ void sendEnrollmentToLaravel(
   http.addHeader(
     "User-Agent",
     "ESP32-RFID-Enrollment/1.0"
+  );
+  http.addHeader(
+    "Authorization",
+    String("Bearer ") + DEVICE_API_TOKEN
   );
 
   // ==================================================

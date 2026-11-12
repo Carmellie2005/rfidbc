@@ -81,7 +81,7 @@ class SupervisorEmailAlertTest extends TestCase
             ->postJson(route('api.rfid-scan'), [
                 'rfid_uid' => $guard->rfid_uid,
                 'device_uid' => 'ESP32-UNKNOWN',
-            ])
+            ], $this->rfidDeviceHeaders('ESP32-UNKNOWN', ['device.scan']))
             ->assertUnprocessable();
 
         Mail::assertSent(RfidScanIssueMail::class, function (RfidScanIssueMail $mail) {

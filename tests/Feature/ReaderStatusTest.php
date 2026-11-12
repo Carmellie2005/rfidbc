@@ -58,7 +58,7 @@ class ReaderStatusTest extends TestCase
             'lcd_status' => 'online',
             'buzzer_status' => 'ready',
             'firmware' => 'checkpoint-diagnostics-v1',
-        ]);
+        ], $this->rfidDeviceHeaders('ESP32-CAN-01', ['device.heartbeat']));
 
         $response
             ->assertOk()

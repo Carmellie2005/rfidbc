@@ -61,6 +61,7 @@ class Kernel extends HttpKernel
         'can' => \Illuminate\Auth\Middleware\Authorize::class,
         'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
         'active.guard' => \App\Http\Middleware\EnsureGuardIsActive::class,
+        'rfid.device' => \App\Http\Middleware\AuthenticateRfidDevice::class,
         'password.confirm' => \Illuminate\Auth\Middleware\RequirePassword::class,
         'precognitive' => \Illuminate\Foundation\Http\Middleware\HandlePrecognitiveRequests::class,
         'supervisor' => \App\Http\Middleware\EnsureUserIsSupervisor::class,

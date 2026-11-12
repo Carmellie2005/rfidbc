@@ -35,7 +35,7 @@ class PatrolAreaSelfieTest extends TestCase
         $response = $this->postJson(route('api.rfid-scan'), [
             'rfid_uid' => 'F33C8D37',
             'device_uid' => 'ESP32-IT-01',
-        ]);
+        ], $this->rfidDeviceHeaders('ESP32-IT-01', ['device.scan']));
 
         $response
             ->assertCreated()
@@ -64,7 +64,7 @@ class PatrolAreaSelfieTest extends TestCase
         $response = $this->postJson(route('api.rfid-scan'), [
             'rfid_uid' => 'F33C8D37',
             'device_uid' => 'ESP32-IT-01',
-        ]);
+        ], $this->rfidDeviceHeaders('ESP32-IT-01', ['device.scan']));
 
         $response
             ->assertStatus(423)
@@ -90,7 +90,7 @@ class PatrolAreaSelfieTest extends TestCase
         $response = $this->postJson(route('api.rfid-scan'), [
             'rfid_uid' => 'UNREGISTERED123',
             'device_uid' => 'ESP32-IT-01',
-        ]);
+        ], $this->rfidDeviceHeaders('ESP32-IT-01', ['device.scan']));
 
         $response
             ->assertUnprocessable()

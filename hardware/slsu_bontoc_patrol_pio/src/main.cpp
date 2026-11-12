@@ -30,6 +30,10 @@
 #define API_PATH "/api/rfid-enrollment"
 #endif
 
+#ifndef DEVICE_API_TOKEN
+#define DEVICE_API_TOKEN ""
+#endif
+
 #ifndef RFID_SS_PIN
 #define RFID_SS_PIN 5
 #endif
@@ -337,6 +341,7 @@ void sendHeartbeatToServer() {
   http.setTimeout(HEARTBEAT_TIMEOUT_MS);
   http.addHeader("Accept", "application/json");
   http.addHeader("User-Agent", "SLSU-Bontoc-Patrol-ESP32-Heartbeat/1.0");
+  http.addHeader("Authorization", String("Bearer ") + DEVICE_API_TOKEN);
 
   int httpCode = http.GET();
   String response = http.getString();
@@ -494,6 +499,7 @@ void sendUidToServer(String rfidUid) {
   http.addHeader("Content-Type", "application/json");
   http.addHeader("Accept", "application/json");
   http.addHeader("User-Agent", "SLSU-Bontoc-Patrol-ESP32/1.0");
+  http.addHeader("Authorization", String("Bearer ") + DEVICE_API_TOKEN);
 
   StaticJsonDocument<256> payload;
   payload["rfid_uid"] = rfidUid;

@@ -42,6 +42,10 @@ const char* API_URL =
 const char* HEARTBEAT_URL =
   "https://slsubcpatrol.site/api/rfid-heartbeat";
 
+// Generate with: php artisan rfid:issue-device-token ESP32-IT-01
+// Keep the real token private and never commit it to GitHub.
+const char* DEVICE_API_TOKEN = "PASTE_DEVICE_TOKEN_HERE";
+
 // IT Building checkpoint
 #define DEVICE_UID "ESP32-IT-01"
 
@@ -1294,6 +1298,10 @@ void sendHeartbeatToLaravel() {
     "User-Agent",
     "ESP32-RFID-Heartbeat/1.0"
   );
+  http.addHeader(
+    "Authorization",
+    String("Bearer ") + DEVICE_API_TOKEN
+  );
 
   StaticJsonDocument<512> payload;
 
@@ -1683,6 +1691,10 @@ void sendScanToLaravel(
   http.addHeader(
     "User-Agent",
     "ESP32-RFID-Reader/1.0"
+  );
+  http.addHeader(
+    "Authorization",
+    String("Bearer ") + DEVICE_API_TOKEN
   );
 
   StaticJsonDocument<256> payload;

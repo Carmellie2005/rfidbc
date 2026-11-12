@@ -54,6 +54,27 @@ include/secrets.h
 
 then edit the WiFi name and password.
 
+## Sanctum Device Tokens
+
+The RFID API requires a Laravel Sanctum bearer token. Issue one token per
+device from the Laravel application directory:
+
+```bash
+php artisan rfid:issue-device-token ESP32-IT-01
+php artisan rfid:issue-device-token ESP32-REG-01 --enrollment
+```
+
+Copy each returned token into the matching local `include/secrets.h` file:
+
+```cpp
+#define DEVICE_API_TOKEN "PASTE_DEVICE_TOKEN_HERE"
+```
+
+The checkpoint token name is bound to its device UID, and the enrollment token
+is separate. Never commit a real token to GitHub. If a token is exposed, issue
+a replacement; the previous token is revoked automatically for the same device
+name.
+
 ## Upload Examples
 
 Open this folder in VS Code with PlatformIO:

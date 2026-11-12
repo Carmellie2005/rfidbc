@@ -24,7 +24,7 @@ class RfidEnrollmentTest extends TestCase
             ->postJson(route('api.rfid-enrollment'), [
                 'rfid_uid' => 'f33c8d37',
                 'device_uid' => 'enrollment-reader',
-            ])
+            ], $this->rfidEnrollmentHeaders('enrollment-reader', $supervisor))
             ->assertCreated()
             ->assertJson([
                 'rfid_uid' => 'F33C8D37',

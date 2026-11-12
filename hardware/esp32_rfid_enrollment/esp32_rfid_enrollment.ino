@@ -17,6 +17,10 @@ const char* SECOND_BACKUP_WIFI_PASSWORD = "12345678";
 // Use this reader with Guard Management > Scan Card.
 const char* API_URL = "https://slsubcpatrol.site/api/rfid-enrollment";
 
+// Generate with: php artisan rfid:issue-device-token ESP32-REG-01 --enrollment
+// Keep the real token private and never commit it to GitHub.
+const char* DEVICE_API_TOKEN = "PASTE_DEVICE_TOKEN_HERE";
+
 // Enrollment reader device ID.
 #define DEVICE_UID "ESP32-REG-01"
 
@@ -240,6 +244,7 @@ void sendEnrollmentToLaravel(String rfidUid) {
   http.addHeader("Content-Type", "application/json");
   http.addHeader("Accept", "application/json");
   http.addHeader("User-Agent", "ESP32-RFID-Enrollment/1.0");
+  http.addHeader("Authorization", String("Bearer ") + DEVICE_API_TOKEN);
 
   StaticJsonDocument<256> payload;
   payload["rfid_uid"] = rfidUid;
