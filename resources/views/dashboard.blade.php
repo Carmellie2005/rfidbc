@@ -105,6 +105,71 @@
                 @endforeach
             </section>
 
+            @php
+                $formatDashboardBytes = function (?int $bytes): string {
+                    if ($bytes === null) {
+                        return 'Unavailable';
+                    }
+
+                    if ($bytes < 1024) {
+                        return $bytes.' B';
+                    }
+
+                    $value = (float) $bytes;
+                    $unit = 'B';
+
+                    foreach (['KB', 'MB', 'GB', 'TB'] as $nextUnit) {
+                        $value /= 1024;
+                        $unit = $nextUnit;
+
+                        if ($value < 1024) {
+                            break;
+                        }
+                    }
+
+                    return number_format($value, $value >= 10 ? 1 : 2).' '.$unit;
+                };
+                $storageUsedPercent = $storageMonitor['serverUsedPercent'];
+                $storageWarning = $storageMonitor['storageStatus'] === 'warning';
+            @endphp
+
+            <section class="system-card-transition rounded-md border border-blue-100 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/80 sm:p-5">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                        <h3 class="font-semibold text-blue-950 dark:text-white">Storage &amp; Backup Monitor</h3>
+                        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Monitor patrol and incident pictures before storage becomes a problem.</p>
+                    </div>
+                    <a href="{{ route('storage-monitor.index') }}" class="inline-flex w-fit items-center rounded-md border border-blue-200 px-3 py-2 text-xs font-semibold text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-slate-600 dark:text-blue-200 dark:hover:bg-slate-800 dark:focus:ring-offset-slate-950">
+                        Open monitor
+                    </a>
+                </div>
+
+                <div class="mt-4 grid gap-3 sm:grid-cols-3">
+                    <div class="rounded-md bg-blue-50/70 p-3 dark:bg-slate-900">
+                        <p class="text-[0.65rem] font-semibold uppercase tracking-wide text-blue-800 dark:text-blue-200">Stored pictures</p>
+                        <p class="mt-1 text-xl font-bold text-blue-950 dark:text-white">{{ number_format($storageMonitor['imageCount']) }}</p>
+                    </div>
+                    <div class="rounded-md bg-sky-50/70 p-3 dark:bg-slate-900">
+                        <p class="text-[0.65rem] font-semibold uppercase tracking-wide text-sky-800 dark:text-sky-200">Media footprint</p>
+                        <p class="mt-1 text-xl font-bold text-sky-950 dark:text-white">{{ $formatDashboardBytes($storageMonitor['trackedMediaBytes']) }}</p>
+                    </div>
+                    <div class="rounded-md bg-emerald-50/70 p-3 dark:bg-slate-900">
+                        <p class="text-[0.65rem] font-semibold uppercase tracking-wide text-emerald-800 dark:text-emerald-200">Server free space</p>
+                        <p class="mt-1 text-xl font-bold text-emerald-950 dark:text-white">{{ $formatDashboardBytes($storageMonitor['serverFreeBytes']) }}</p>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <div class="flex items-center justify-between gap-3 text-xs font-medium text-slate-500 dark:text-slate-400">
+                        <span>{{ $storageUsedPercent === null ? 'Server capacity unavailable' : number_format((float) $storageUsedPercent, 1).'% of server storage used' }}</span>
+                        <span>Warning at 80%</span>
+                    </div>
+                    <div class="mt-2 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                        <div class="h-full rounded-full {{ $storageWarning ? 'bg-amber-500' : 'bg-blue-600' }}" style="width: {{ $storageUsedPercent === null ? 0 : min(100, max(0, (float) $storageUsedPercent)) }}%"></div>
+                    </div>
+                </div>
+            </section>
+
             <section
                 x-data="dashboardCharts(@js($analytics))"
                 x-init="render()"

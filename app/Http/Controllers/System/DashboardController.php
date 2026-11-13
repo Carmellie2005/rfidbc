@@ -9,12 +9,13 @@ use App\Models\IncidentReport;
 use App\Models\PatrolLog;
 use App\Support\PatrolChecklist;
 use App\Support\DutyRoster;
+use App\Support\StorageMonitor;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
-    public function __invoke(Request $request): View
+    public function __invoke(Request $request, StorageMonitor $storageMonitor): View
     {
         $timezone = config('app.timezone');
         $today = now($timezone)->toDateString();
@@ -66,6 +67,7 @@ class DashboardController extends Controller
                 ->take(5)
                 ->get(),
             'checkpointActivity' => $checkpointActivity,
+            'storageMonitor' => $storageMonitor->summary(),
             'analytics' => [
                 'patrolTrend' => [
                     'labels' => $trendDates->map(fn ($date) => $date->format('M d'))->values(),

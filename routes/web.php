@@ -17,6 +17,7 @@ use App\Http\Controllers\System\ReaderStatusController;
 use App\Http\Controllers\System\ReportController;
 use App\Http\Controllers\System\RfidEnrollmentController;
 use App\Http\Controllers\System\ScanIssueController;
+use App\Http\Controllers\System\StorageMonitorController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -83,6 +84,9 @@ Route::middleware(['auth', 'active.guard'])->group(function () {
         Route::patch('/incidents/{incidentReport}', [IncidentReportController::class, 'update'])->name('incidents.update');
         Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
         Route::get('/reader-status', [ReaderStatusController::class, 'index'])->name('readers.index');
+        Route::get('/storage-monitor', [StorageMonitorController::class, 'index'])->name('storage-monitor.index');
+        Route::get('/storage-monitor/inventory', [StorageMonitorController::class, 'downloadInventory'])->name('storage-monitor.inventory');
+        Route::get('/storage-monitor/media-backup', [StorageMonitorController::class, 'downloadMediaBackup'])->name('storage-monitor.media-backup');
         Route::get('/scan-issues', [ScanIssueController::class, 'index'])->name('scan-issues.index');
         Route::post('/push-subscriptions', [PushSubscriptionController::class, 'store'])->name('push-subscriptions.store');
         Route::delete('/push-subscriptions', [PushSubscriptionController::class, 'destroy'])->name('push-subscriptions.destroy');

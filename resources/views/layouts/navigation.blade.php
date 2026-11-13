@@ -33,6 +33,7 @@
         'incidents' => '<svg class="'.$class.'" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 9v4m0 4h.01M10.3 4.2 2.7 17.4A2 2 0 0 0 4.4 20h15.2a2 2 0 0 0 1.7-2.6L13.7 4.2a2 2 0 0 0-3.4 0Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>',
         'scan' => '<svg class="'.$class.'" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 5h5v5H5V5Zm9 0h5v5h-5V5ZM5 14h5v5H5v-5Zm10 1h4m-4 4h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>',
         'readers' => '<svg class="'.$class.'" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 9.5h8v5H5v-5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" /><path d="M7.5 17h3M7.5 7h3M16 8c1.3 1.2 1.3 4.8 0 6M19 5c3 3.4 3 10.6 0 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>',
+        'storage' => '<svg class="'.$class.'" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="2" /><path d="M7 8h10M7 12h6M7 16h3" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>',
         'audit' => '<svg class="'.$class.'" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 4h8l3 3v13H5V4h3Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" /><path d="M16 4v4h3M8.5 11h7M8.5 14h7M8.5 17h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>',
         'profile' => '<svg class="'.$class.'" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0M12 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>',
         'evidence' => '<svg class="'.$class.'" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="2" /><circle cx="8.5" cy="9" r="1.5" fill="currentColor" /><path d="m5 17 4.5-4 3 2.5 2.5-2 4 3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>',
@@ -51,6 +52,7 @@
             ['label' => 'Patrol Logs', 'href' => route('patrol-logs.index'), 'icon' => 'patrols', 'active' => request()->routeIs('patrol-logs.*')],
             ['label' => 'Device Diagnostics', 'href' => route('readers.index'), 'icon' => 'readers', 'active' => request()->routeIs('readers.*')],
             ['label' => 'Incidents', 'href' => route('incidents.index'), 'icon' => 'incidents', 'active' => request()->routeIs('incidents.*')],
+            ['label' => 'Storage & Backups', 'href' => route('storage-monitor.index'), 'icon' => 'storage', 'active' => request()->routeIs('storage-monitor.*')],
             ['label' => 'Audit Trail', 'href' => route('audit-logs.index'), 'icon' => 'audit', 'active' => request()->routeIs('audit-logs.*')],
         ]
         : [
@@ -307,6 +309,11 @@
                     <a href="{{ route('readers.index') }}" class="{{ $linkClasses(request()->routeIs('readers.*')) }}" @click="sidebarOpen = false">
                         {!! $navIcon('readers') !!}
                         <span>Device Diagnostics</span>
+                    </a>
+
+                    <a href="{{ route('storage-monitor.index') }}" class="{{ $linkClasses(request()->routeIs('storage-monitor.*')) }}" @click="sidebarOpen = false">
+                        {!! $navIcon('storage') !!}
+                        <span>Storage &amp; Backups</span>
                     </a>
 
                     <a href="{{ route('audit-logs.index') }}" class="{{ $linkClasses(request()->routeIs('audit-logs.*')) }}" @click="sidebarOpen = false">
