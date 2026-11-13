@@ -37,6 +37,7 @@
         'audit' => '<svg class="'.$class.'" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 4h8l3 3v13H5V4h3Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" /><path d="M16 4v4h3M8.5 11h7M8.5 14h7M8.5 17h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>',
         'profile' => '<svg class="'.$class.'" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0M12 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>',
         'evidence' => '<svg class="'.$class.'" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="2" /><circle cx="8.5" cy="9" r="1.5" fill="currentColor" /><path d="m5 17 4.5-4 3 2.5 2.5-2 4 3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>',
+        'help' => '<svg class="'.$class.'" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" /><path d="M9.75 9a2.25 2.25 0 1 1 3.75 1.67c-.85.7-1.5 1.13-1.5 2.58M12 16.75h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>',
         default => '<svg class="'.$class.'" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 7.5A2.5 2.5 0 0 1 7.5 5h9A2.5 2.5 0 0 1 19 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 5 16.5v-9Z" stroke="currentColor" stroke-width="2" /><path d="M8.5 9.5h7m-7 5h7" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>',
     });
 
@@ -59,6 +60,7 @@
             ['label' => 'Scan Checkpoint', 'href' => route('patrol.scan'), 'icon' => 'scan', 'active' => request()->routeIs('patrol.scan')],
             ['label' => 'My Patrol Logs', 'href' => route('patrol-logs.index'), 'icon' => 'patrols', 'active' => request()->routeIs('patrol-logs.*')],
             ['label' => 'My Evidence', 'href' => route('patrol.evidence'), 'icon' => 'evidence', 'active' => request()->routeIs('patrol.evidence')],
+            ['label' => 'Quick Help', 'href' => route('guard.quick-help'), 'icon' => 'help', 'active' => request()->routeIs('guard.quick-help')],
             ['label' => 'Profile', 'href' => route('profile.edit'), 'icon' => 'profile', 'active' => request()->routeIs('profile.edit')],
         ];
 @endphp
@@ -155,6 +157,10 @@
                     {!! $navIcon('evidence') !!}
                     <span>My Evidence</span>
                 </a>
+                <a href="{{ route('guard.quick-help') }}" class="{{ $linkClasses(request()->routeIs('guard.quick-help')) }}" @click="sidebarOpen = false">
+                    {!! $navIcon('help') !!}
+                    <span>Quick Help</span>
+                </a>
                 <a href="{{ route('profile.edit') }}" class="{{ $linkClasses(request()->routeIs('profile.*')) }}" @click="sidebarOpen = false">
                     {!! $navIcon('profile') !!}
                     <span>Profile</span>
@@ -221,6 +227,11 @@
                     <a href="{{ route('patrol.evidence') }}" class="{{ $linkClasses(request()->routeIs('patrol.evidence')) }}" @click="sidebarOpen = false">
                         {!! $navIcon('evidence') !!}
                         <span>My Evidence</span>
+                    </a>
+
+                    <a href="{{ route('guard.quick-help') }}" class="{{ $linkClasses(request()->routeIs('guard.quick-help')) }}" @click="sidebarOpen = false">
+                        {!! $navIcon('help') !!}
+                        <span>Quick Help</span>
                     </a>
                 @endunless
             </div>

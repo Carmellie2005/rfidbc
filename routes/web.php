@@ -49,6 +49,11 @@ Route::middleware(['auth', 'active.guard'])->group(function () {
 
     Route::get('/patrol/scan', [GuardPatrolController::class, 'create'])->name('patrol.scan');
     Route::get('/patrol/evidence', [GuardEvidenceController::class, 'index'])->name('patrol.evidence');
+    Route::get('/guard/quick-help', function () {
+        abort_unless(auth()->user()?->role === 'guard', 403);
+
+        return view('system.guard.quick-help');
+    })->name('guard.quick-help');
     Route::get('/patrol/pending-scan', [GuardPatrolController::class, 'pendingScan'])->name('patrol.pending-scan');
     Route::post('/patrol/scan', [GuardPatrolController::class, 'store'])->name('patrol.store');
     Route::post('/patrol/scan/cancel', [GuardPatrolController::class, 'cancel'])->name('patrol.cancel');
